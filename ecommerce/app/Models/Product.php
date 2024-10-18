@@ -11,6 +11,7 @@ class Product extends Model
 
     // Specify which attributes can be mass assigned
     protected $fillable = [
+        'name',
         'description',
         'price',
         'quantity',
