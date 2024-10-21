@@ -1,52 +1,104 @@
-//Sends updated product data to the backend
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Button, Container } from 'react-bootstrap';
 
 function EditProduct() {
-  const { id } = useParams();
+  const { id } = useParams(); // Get product ID from the URL
   const navigate = useNavigate();
-  const [product, setProduct] = useState({});
 
+  // State to store the product details
+  const [product, setProduct] = useState({
+    description: '',
+    price: '',
+    quantity: '',
+    category: ''
+  });
+
+  // Fetch product details on mount
   useEffect(() => {
-    //Fetch product details by ID from /api/products/:id
+    // Imagine a magic fetch from the database
     const fetchProduct = async () => {
-      const response = await fetch(`/api/products/${id}`);
-      const data = await response.json();
-      setProduct(data);
+      const productData = {
+        id: 1, 
+        barcode: '123456789', 
+        description: 'Apple', 
+        price: 1.5, 
+        quantity: 100, 
+        category: 'Fruits'
+      };
+      setProduct(productData);
     };
-
     fetchProduct();
   }, [id]);
 
-  const handleSave = async () => {
-    //Send PUT request to /api/products/:id to update product details
-    const response = await fetch(`/api/products/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(product),
+  // Handle form input change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct({
+      ...product,
+      [name]: value,
     });
+  };
 
-    if (response.ok) {
-      navigate('/products'); //Redirect on success.
-    } else {
-      alert('Error updating product');
-    }
+  // Handle form submission to update the product
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Imagine this is the point where magic happens (updating the database)
+    const updatedProduct = {
+      ...product,
+      price: parseFloat(product.price), // Ensure price is a number
+      quantity: parseInt(product.quantity) // Ensure quantity is a number
+    };
+
+    console.log("Product updated:", updatedProduct);
+
+    // Redirect to product list page after saving
+    navigate('/product-list');
   };
 
   return (
     <Container>
       <h2>Edit Product</h2>
-      <Form>
-        <Form.Group className="mb-3">
+      <Form onSubmit={handleSubmit}>
+        {/* Description */}
+        <Form.Group controlId="formProductDescription">
           <Form.Label>Description</Form.Label>
           <Form.Control
             type="text"
-            value={product.description || ''}
-            onChange={(e) => setProduct({ ...product, description: e.target.value })}
+            name="description"
+            value={product.description}
+            onChange={handleChange}
           />
         </Form.Group>
-        <Button onClick={handleSave}>Save Changes</Button>
+
+        {/* Price */}
+        <Form.Group controlId="formProductPrice">
+          <Form.Label>Price</Form.Label>
+          <Form.Control
+            type="number"
+            name="price"
+            value={product.price}
+            onChange={handleChange}
+            step="0.01"
+          />
+        </Form.Group>
+
+        {/* Quantity */}
+        <Form.Group controlId="formProductQuantity">
+          <Form.Label>Quantity</Form.Label>
+          <Form.Control
+            type="number"
+            name="quantity"
+            value={product.quantity}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        {/* Submit Button */}
+        <Button variant="primary" type="submit">
+          Update Product
+        </Button>
       </Form>
     </Container>
   );
