@@ -44,6 +44,12 @@ class ProductController extends Controller
 
         // Paginate the results
         $products = $query->paginate(10); // Adjust the number as needed
+
+        // Check if products were found
+        if ($products->isEmpty()) {
+            return response()->json(['message' => 'No products found matching your criteria.'], 404);
+        }
+
         return response()->json($products);
     }
 
