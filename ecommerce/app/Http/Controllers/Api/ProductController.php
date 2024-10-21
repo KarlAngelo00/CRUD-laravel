@@ -10,11 +10,40 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the products.
+     * Display a listing of the products with filtering and pagination.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
+        $query = Product::query();
+
+        // Filter by category if provided
+        if ($request->has('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        // Filter by price range if provided
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->input('min_price'));
+        }
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->input('max_price'));
+        }
+
+        // Filter by available quantity if provided
+        if ($request->has('min_quantity')) {
+            $query->where('quantity', '>=', $request->input('min_quantity'));
+        }
+        if ($request->has('max_quantity')) {
+            $query->where('quantity', '<=', $request->input('max_quantity'));
+        }
+
+        // Search by description if provided
+        if ($request->has('search')) {
+            $query->where('description', 'like', '%' . $request->input('search') . '%');
+        }
+
+        // Paginate the results
+        $products = $query->paginate(10); // Adjust the number as needed
         return response()->json($products);
     }
 
@@ -24,7 +53,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255', // Added name validation
+            'barcode' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'price' => 'required|numeric',
             'quantity' => 'required|integer',
@@ -55,7 +84,7 @@ class ProductController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255', // Added name validation
+                'barcode' => 'required|string|max:255',
                 'description' => 'required|string|max:255',
                 'price' => 'required|numeric',
                 'quantity' => 'required|integer',

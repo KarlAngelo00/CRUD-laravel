@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\AuthController; // Include the AuthController
+use App\Http\Controllers\AuthController;
 
 // Define API routes for Product resource
 Route::apiResource('products', ProductController::class);
