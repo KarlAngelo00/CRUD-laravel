@@ -1,134 +1,157 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Form, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import './Dashboard.css';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Form, Button, Container, Alert } from 'react-bootstrap';
 
-function ProductList() {
-  const [products, setProducts] = useState([]); // Initialize products as an empty array
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState(''); // State for category filter
+function EditProduct() {
+  const { id } = useParams(); // Get product ID from the URL
+  const navigate = useNavigate();
+
+  // State to store the product details
+  const [product, setProduct] = useState({
+    description: '',
+    price: '',
+    quantity: '',
+    category: ''
+  });
+
+  const [error, setError] = useState('');  // For handling any errors
+  const [success, setSuccess] = useState('');  // For handling successful updates
   const [loading, setLoading] = useState(true); // For loading state
-  const [error, setError] = useState(''); // For handling errors
 
-  // Fetch product data from the API
+  // Fetch product details from the API when the component mounts
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProduct = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/products');
+        const response = await fetch(`http://127.0.0.1:8000/api/products/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch product data');
         
-        // Check for a successful response (status 200 range)
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        // Log the API response to see its structure
-        console.log('API Response:', data); // Log the raw response
-
-        // Check if the response is an array
-        if (Array.isArray(data)) {
-          setProducts(data); // If it's an array, use it directly
-        } 
-        // Check if the response is an object and has a 'products' array
-        else if (data && typeof data === 'object' && Array.isArray(data.products)) {
-          setProducts(data.products); // If it's an object with 'products' array
-        } 
-        // Check if the response is an object with other possible nested formats
-        else if (data && Array.isArray(data.data)) {
-          setProducts(data.data); // Some APIs may return data in 'data' property
-        } else {
-          throw new Error('Unexpected response format: Products data is missing');
-        }
-
-      } catch (err) {
-        // Handle fetch errors
-        setError(err.message || 'Failed to fetch products');
+        const productData = await response.json();
+        setProduct(productData); // Populate form with fetched product data
+      } catch (error) {
+        setError('Error fetching product data. Please try again.');
       } finally {
-        setLoading(false);
+        setLoading(false); // Set loading to false after fetching
       }
     };
+    fetchProduct();
+  }, [id]);
 
-    fetchProducts();
-  }, []);
+  // Handle form input change
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct({
+      ...product,
+      [name]: value,
+    });
+  };
 
-  // Filter products based on search term and category filter
-  const filteredProducts = Array.isArray(products)
-    ? products.filter((product) =>
-        product.description.toLowerCase().includes(search.toLowerCase()) &&
-        (categoryFilter === '' || product.category === categoryFilter)
-      )
-    : [];
+  // Handle form submission to update the product
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Loading and error handling UI
-  if (loading) return <p>Loading products...</p>;
-  if (error) return <p>{error}</p>;
+    // Ensure price and quantity are numbers
+    const updatedProduct = {
+      ...product,
+      price: parseFloat(product.price) || 0,  // Ensure price is a number
+      quantity: parseInt(product.quantity) || 0 // Ensure quantity is a number
+    };
+
+    try {
+      // Send PUT request to update the product
+      const response = await fetch(`http://127.0.0.1:8000/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct),  // Send updated product data as JSON
+      });
+
+      // Handle the response
+      if (response.ok) {
+        setSuccess('Product updated successfully!');
+        setError('');
+        setTimeout(() => {
+          navigate('/products');  // Redirect to the product list after 1.5 seconds
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        setError(`Failed to update product: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setError('Error updating product. Please try again.');
+    }
+  };
+
+  // If loading, display a spinner or loading message
+  if (loading) {
+    return <Container><h2>Loading product data...</h2></Container>;
+  }
 
   return (
-    <Container style={{ backgroundColor: '#f0f4f1', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
-      <h2 style={{ color: '#4b4b4b' }}>Product List</h2>
+    <Container>
+      <h2>Edit Product</h2>
 
-      {/* Search input field to filter products by description */}
-      <Form.Control
-        type="text"
-        placeholder="Search products..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-3"
-        style={{ borderColor: '#c5c1b4', borderRadius: '8px' }}
-      />
+      {/* Display success message */}
+      {success && <Alert variant="success">{success}</Alert>}
 
-      {/* Category filter dropdown */}
-      <Form.Select
-        value={categoryFilter}
-        onChange={(e) => setCategoryFilter(e.target.value)}
-        className="mb-3"
-        style={{ borderColor: '#c5c1b4', borderRadius: '8px' }}
-      >
-        <option value="">All Categories</option>
-        <option value="Fruits">Fruits</option>
-        <option value="Dairy">Dairy</option>
-        <option value="Bakery">Bakery</option>
-      </Form.Select>
+      {/* Display error message */}
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Table to display the list of products */}
-      <Table striped bordered hover className="table" style={{ backgroundColor: '#fffdf5' }}>
-        <thead>
-          <tr>
-            <th>Barcode</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Category</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Map over the filtered products to display each one in a table row */}
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <tr key={product.id}>
-                <td>{product.barcode}</td>
-                <td>{product.description}</td>
-                <td>${Number(product.price).toFixed(2)}</td> {/* Convert price to a number */}
-                <td>{product.quantity}</td>
-                <td>{product.category}</td>
-                <td>
-                  <Link to={`/product-detail/${product.id}`} style={{ color: '#6a8759' }}>View Details</Link>
-                  <span style={{ marginLeft: '15px' }}></span>
-                  <Link to={`/edit-product/${product.id}`} style={{ color: '#6a8759' }}>Edit</Link>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6">No products found</td>
-            </tr>
-          )}
-        </tbody>
-      </Table>
+      <Form onSubmit={handleSubmit}>
+        {/* Description */}
+        <Form.Group controlId="formProductDescription">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            type="text"
+            name="description"
+            value={product.description}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        {/* Price */}
+        <Form.Group controlId="formProductPrice">
+          <Form.Label>Price</Form.Label>
+          <Form.Control
+            type="number"
+            name="price"
+            value={product.price}
+            onChange={handleChange}
+            step="0.01"
+            required
+          />
+        </Form.Group>
+
+        {/* Quantity */}
+        <Form.Group controlId="formProductQuantity">
+          <Form.Label>Quantity</Form.Label>
+          <Form.Control
+            type="number"
+            name="quantity"
+            value={product.quantity}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        {/* Category */}
+        <Form.Group controlId="formProductCategory">
+          <Form.Label>Category</Form.Label>
+          <Form.Control
+            type="text"
+            name="category"
+            value={product.category}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
+
+        {/* Submit Button */}
+        <Button variant="primary" type="submit" className="mt-3">
+          Update Product
+        </Button>
+      </Form>
     </Container>
   );
 }
 
-export default ProductList;
+export default EditProduct;
