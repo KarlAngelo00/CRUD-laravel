@@ -49,6 +49,10 @@ function ProductDetail({ onDelete }) {
     }
   };
 
+  const handleBack = () => {
+    navigate('/products'); // Navigate back to the product list
+  };
+
   if (loading) return <p>Loading product...</p>;
   if (error) return <p>{error}</p>;
 
@@ -61,6 +65,12 @@ function ProductDetail({ onDelete }) {
   return (
     <Container>
       <h2>Product Detail</h2>
+      
+      {/* Back Button */}
+      <Button variant="secondary" onClick={handleBack} className="mb-3">
+        Back to Product List
+      </Button>
+
       <p><strong>Description:</strong> {product.description}</p>
       <p><strong>Price:</strong> ${formattedPrice}</p>
       <p><strong>Quantity:</strong> {product.quantity}</p>

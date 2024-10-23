@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Form, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Table, Form, Container, Button } from 'react-bootstrap'; // Import Button
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for back navigation
 import './Dashboard.css';
 
 function ProductList() {
@@ -9,6 +9,7 @@ function ProductList() {
   const [categoryFilter, setCategoryFilter] = useState(''); // State for category filter
   const [loading, setLoading] = useState(true); // For loading state
   const [error, setError] = useState(''); // For handling errors
+  const navigate = useNavigate(); // Hook for programmatic navigation
 
   // Fetch product data from the API
   useEffect(() => {
@@ -67,6 +68,14 @@ function ProductList() {
   return (
     <Container style={{ backgroundColor: '#f0f4f1', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
       <h2 style={{ color: '#4b4b4b' }}>Product List</h2>
+
+      {/* Back to Dashboard Button */}
+      <Button
+        onClick={() => navigate('/dashboard')} // Go back to the dashboard
+        style={{ marginBottom: '20px', backgroundColor: '#6a8759', border: 'none' }}
+      >
+        Back to Dashboard
+      </Button>
 
       {/* Search input field to filter products by description */}
       <Form.Control
